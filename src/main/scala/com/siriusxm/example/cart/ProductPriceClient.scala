@@ -1,7 +1,7 @@
 package com.siriusxm.example.cart
 
 import cats.data.EitherT
-import cats.effect.{Async}
+import cats.effect.Async
 import cats.implicits._
 import sttp.client3.circe._
 import sttp.client3._
@@ -33,7 +33,8 @@ object ProductPriceClient {
       val request = basicRequest
         .get(uri"""https://raw.githubusercontent.com/mattjanks16/shopping-cart-test-data/main/${productName}.json""")
         .response(asJson[ShoppingProductPriceResponse])
-      val result = backend.send(request)
+      val result = backend
+        .send(request)
         .map(_.body.leftMap(_ => CartError.UnableToFindPrice(product)).leftWiden[CartError])
       EitherT(result)
     }

@@ -9,17 +9,16 @@ import com.siriusxm.example.cart.ProductPriceClient.{LiveProductPriceClient, Tes
 import java.util.UUID
 
 object Main extends IOApp.Simple {
-  def run: IO[Unit] = {
+  def run: IO[Unit] =
     for {
       ref <- Ref[IO].of(Map.empty[UUID, CurrentCart])
-      cartService = new LiveCartService(new LiveProductPriceClient[IO], ref)
+      cartService          = new LiveCartService(new LiveProductPriceClient[IO], ref)
       testErrorCartService = new LiveCartService(new TestToFailProductPriceClient[IO], ref)
       _ <- testPricingCalculation(cartService)
       _ <- testSeveralAddingSameProducts(cartService)
       _ <- testUnableToFindCart(cartService)
       _ <- testUnableToFindPrice(testErrorCartService)
     } yield ()
-  }
 
   def testPricingCalculation(cartService: CartService[IO]): IO[Unit] = {
     val cartId = UUID.randomUUID()
@@ -27,23 +26,25 @@ object Main extends IOApp.Simple {
       NonEmptyList.of(CartItem(ShoppingProduct.CornFlakes, 2), CartItem(ShoppingProduct.Weetabix, 1))
 
     for {
-      _ <- cartService.addToCart(cartId, initialCartItems).value
+      _                 <- cartService.addToCart(cartId, initialCartItems).value
       cartForPriceCheck <- cartService.getCart(cartId).value
-      _ <- IO(assert(cartForPriceCheck.map(_.subtotal) == Right(BigDecimal(15.02))))
-      _ <- IO(assert(cartForPriceCheck.map(_.tax) == Right(BigDecimal(1.88))))
-      _ <- IO(assert(cartForPriceCheck.map(_.total) == Right(BigDecimal(16.90))))
+      _                 <- IO(assert(cartForPriceCheck.map(_.subtotal) == Right(BigDecimal(15.02))))
+      _                 <- IO(assert(cartForPriceCheck.map(_.tax) == Right(BigDecimal(1.88))))
+      _                 <- IO(assert(cartForPriceCheck.map(_.total) == Right(BigDecimal(16.90))))
     } yield ()
   }
 
   def testSeveralAddingSameProducts(cartService: CartService[IO]): IO[Unit] = {
-    val cartId = UUID.randomUUID()
+    val cartId           = UUID.randomUUID()
     val initialCartItems = NonEmptyList.of(CartItem(ShoppingProduct.Cheerios, 2), CartItem(ShoppingProduct.Frosties, 3))
 
     for {
       _ <- cartService.addToCart(cartId, initialCartItems).value
       moreCartItems = NonEmptyList.of(CartItem(ShoppingProduct.Frosties, 2), CartItem(ShoppingProduct.Shreddies, 6))
       _ <- cartService.addToCart(cartId, moreCartItems).value
-      cartItemsForCheck <- cartService.getCart(cartId).value
+      cartItemsForCheck <- cartService
+        .getCart(cartId)
+        .value
         .map(_.map(_.items.map(_.asCartItem).sortBy(_.shoppingProduct.toString)))
       expectedCartItems = List(
         CartItem(ShoppingProduct.Cheerios, 2),
@@ -58,16 +59,16 @@ object Main extends IOApp.Simple {
     val nonExistingCartId = UUID.randomUUID()
     for {
       nonExistingCart <- cartService.getCart(nonExistingCartId).value
-      _ <- IO(assert(nonExistingCart == Left(CartError.UnableToFindCart(nonExistingCartId))))
+      _               <- IO(assert(nonExistingCart == Left(CartError.UnableToFindCart(nonExistingCartId))))
     } yield ()
   }
 
   def testUnableToFindPrice(cartService: CartService[IO]): IO[Unit] = {
-    val cartId = UUID.randomUUID()
+    val cartId    = UUID.randomUUID()
     val cartItems = NonEmptyList.of(CartItem(ShoppingProduct.Cheerios, 2), CartItem(ShoppingProduct.Weetabix, 1))
     for {
       error <- cartService.addToCart(cartId, cartItems).value
-      _ <- IO(assert(error == Left(CartError.UnableToFindPrice(ShoppingProduct.Cheerios))))
+      _     <- IO(assert(error == Left(CartError.UnableToFindPrice(ShoppingProduct.Cheerios))))
     } yield ()
   }
 
