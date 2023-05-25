@@ -6,16 +6,16 @@ import cats.syntax.traverse._
 
 import java.util.UUID
 
-trait CartService {
-  def getCart(cartId: UUID): EitherT[IO, CartError, CurrentCart]
+trait CartService[F[_]] {
+  def getCart(cartId: UUID): EitherT[F, CartError, CurrentCart]
 
-  def addToCart(cartId: UUID, cartItemsToAdd: NonEmptyList[CartItem]): EitherT[IO, CartError, Unit]
+  def addToCart(cartId: UUID, cartItemsToAdd: NonEmptyList[CartItem]): EitherT[F, CartError, Unit]
 }
 
 object CartService {
   type Carts = Map[UUID, CurrentCart]
 
-  class LiveCartService(productPriceClient: ProductPriceClient, carts: Ref[IO, Carts]) extends CartService {
+  class LiveCartService(productPriceClient: ProductPriceClient[IO], carts: Ref[IO, Carts]) extends CartService[IO] {
     def getCart(cartId: UUID): EitherT[IO, CartError, CurrentCart] =
       EitherT(
         carts.get

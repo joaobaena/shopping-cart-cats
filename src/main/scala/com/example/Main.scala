@@ -14,28 +14,28 @@ object Main extends IOApp.Simple {
       ref <- Ref[IO].of(Map.empty[UUID, CurrentCart])
       cartService = new LiveCartService(new LiveProductPriceClient, ref)
       testErrorCartService = new LiveCartService(new TestToFailProductPriceClient, ref)
-//      _ <- testPricingCalculation(cartService)
+      _ <- testPricingCalculation(cartService)
       _ <- testSeveralAddingSameProducts(cartService)
       _ <- testUnableToFindCart(cartService)
       _ <- testUnableToFindPrice(testErrorCartService)
     } yield ()
   }
 
-//  def testPricingCalculation(cartService: CartService): IO[Unit] = {
-//    val cartId = UUID.randomUUID()
-//    val initialCartItems =
-//      NonEmptyList.of(CartItem(ShoppingProduct.CornFlakes, 2), CartItem(ShoppingProduct.Weetabix, 1))
-//
-//    for {
-//      _ <- cartService.addToCart(cartId, initialCartItems).value
-//      cartForPriceCheck <- cartService.getCart(cartId).value
-//      _ <- IO(assert(cartForPriceCheck.map(_.subtotal) == Right(BigDecimal(15.02))))
-//      _ <- IO(assert(cartForPriceCheck.map(_.tax) == Right(BigDecimal(1.88))))
-//      _ <- IO(assert(cartForPriceCheck.map(_.total) == Right(BigDecimal(16.90))))
-//    } yield ()
-//  }
+  def testPricingCalculation(cartService: CartService[IO]): IO[Unit] = {
+    val cartId = UUID.randomUUID()
+    val initialCartItems =
+      NonEmptyList.of(CartItem(ShoppingProduct.CornFlakes, 2), CartItem(ShoppingProduct.Weetabix, 1))
 
-  def testSeveralAddingSameProducts(cartService: CartService): IO[Unit] = {
+    for {
+      _ <- cartService.addToCart(cartId, initialCartItems).value
+      cartForPriceCheck <- cartService.getCart(cartId).value
+      _ <- IO(assert(cartForPriceCheck.map(_.subtotal) == Right(BigDecimal(15.02))))
+      _ <- IO(assert(cartForPriceCheck.map(_.tax) == Right(BigDecimal(1.88))))
+      _ <- IO(assert(cartForPriceCheck.map(_.total) == Right(BigDecimal(16.90))))
+    } yield ()
+  }
+
+  def testSeveralAddingSameProducts(cartService: CartService[IO]): IO[Unit] = {
     val cartId = UUID.randomUUID()
     val initialCartItems = NonEmptyList.of(CartItem(ShoppingProduct.Cheerios, 2), CartItem(ShoppingProduct.Frosties, 3))
 
@@ -54,7 +54,7 @@ object Main extends IOApp.Simple {
     } yield ()
   }
 
-  def testUnableToFindCart(cartService: CartService): IO[Unit] = {
+  def testUnableToFindCart(cartService: CartService[IO]): IO[Unit] = {
     val nonExistingCartId = UUID.randomUUID()
     for {
       nonExistingCart <- cartService.getCart(nonExistingCartId).value
@@ -62,7 +62,7 @@ object Main extends IOApp.Simple {
     } yield ()
   }
 
-  def testUnableToFindPrice(cartService: CartService): IO[Unit] = {
+  def testUnableToFindPrice(cartService: CartService[IO]): IO[Unit] = {
     val cartId = UUID.randomUUID()
     val cartItems = NonEmptyList.of(CartItem(ShoppingProduct.Cheerios, 2), CartItem(ShoppingProduct.Weetabix, 1))
     for {

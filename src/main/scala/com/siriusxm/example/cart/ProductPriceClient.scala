@@ -9,12 +9,12 @@ import sttp.client3.armeria.cats.ArmeriaCatsBackend
 
 import scala.util.Random
 
-trait ProductPriceClient {
-  def getPriceForProduct(product: ShoppingProduct): EitherT[IO, CartError, ShoppingProductPriceResponse]
+trait ProductPriceClient[F[_]] {
+  def getPriceForProduct(product: ShoppingProduct): EitherT[F, CartError, ShoppingProductPriceResponse]
 }
 
 object ProductPriceClient {
-  class TestToFailProductPriceClient extends ProductPriceClient {
+  class TestToFailProductPriceClient extends ProductPriceClient[IO] {
     def getPriceForProduct(product: ShoppingProduct): EitherT[IO, CartError, ShoppingProductPriceResponse] =
       product match {
         case ShoppingProduct.Cheerios =>
@@ -25,7 +25,7 @@ object ProductPriceClient {
       }
   }
 
-  class LiveProductPriceClient extends ProductPriceClient {
+  class LiveProductPriceClient extends ProductPriceClient[IO] {
     val backend = ArmeriaCatsBackend[IO]()
 
     def getPriceForProduct(product: ShoppingProduct): EitherT[IO, CartError, ShoppingProductPriceResponse] = {
