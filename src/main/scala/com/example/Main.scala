@@ -12,8 +12,8 @@ object Main extends IOApp.Simple {
   def run: IO[Unit] = {
     for {
       ref <- Ref[IO].of(Map.empty[UUID, CurrentCart])
-      cartService = new LiveCartService(new LiveProductPriceClient, ref)
-      testErrorCartService = new LiveCartService(new TestToFailProductPriceClient, ref)
+      cartService = new LiveCartService(new LiveProductPriceClient[IO], ref)
+      testErrorCartService = new LiveCartService(new TestToFailProductPriceClient[IO], ref)
       _ <- testPricingCalculation(cartService)
       _ <- testSeveralAddingSameProducts(cartService)
       _ <- testUnableToFindCart(cartService)

@@ -1,9 +1,8 @@
 package com.siriusxm.example.cart
 
 import cats.data.{EitherT, NonEmptyList}
-import cats.effect.{IO, Ref}
-import cats.syntax.traverse._
-
+import cats.effect.{Async, Ref}
+import cats.implicits._
 import java.util.UUID
 
 trait CartService[F[_]] {
@@ -13,16 +12,16 @@ trait CartService[F[_]] {
 }
 
 object CartService {
-  type Carts = Map[UUID, CurrentCart]
+  private type Carts = Map[UUID, CurrentCart]
 
-  class LiveCartService(productPriceClient: ProductPriceClient[IO], carts: Ref[IO, Carts]) extends CartService[IO] {
-    def getCart(cartId: UUID): EitherT[IO, CartError, CurrentCart] =
+  class LiveCartService[F[_]: Async](productPriceClient: ProductPriceClient[F], carts: Ref[F, Carts]) extends CartService[F] {
+    def getCart(cartId: UUID): EitherT[F, CartError, CurrentCart] =
       EitherT(
         carts.get
           .map(_.get(cartId).toRight(CartError.UnableToFindCart(cartId)))
       )
 
-    def addToCart(cartId: UUID, cartItemsToAdd: NonEmptyList[CartItem]): EitherT[IO, CartError, Unit] =
+    def addToCart(cartId: UUID, cartItemsToAdd: NonEmptyList[CartItem]): EitherT[F, CartError, Unit] =
       for {
         cartOpt <- EitherT.liftF(carts.get.map(_.get(cartId)))
         currentCartItems = cartOpt.map(_.items.map(_.asCartItem)).toList
