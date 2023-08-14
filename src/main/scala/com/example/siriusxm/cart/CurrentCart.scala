@@ -1,4 +1,4 @@
-package com.siriusxm.example.cart
+package com.example.siriusxm.cart
 
 final case class CurrentCart(items: List[PricedCartItem]) {
   lazy val subtotal: BigDecimal = items.map(_.subtotal).sum

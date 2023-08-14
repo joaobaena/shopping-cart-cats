@@ -1,4 +1,4 @@
-package com.siriusxm.example.cart
+package com.example.siriusxm.cart
 
 sealed trait ShoppingProduct
 

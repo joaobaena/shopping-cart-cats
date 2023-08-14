@@ -1,4 +1,4 @@
-package com.siriusxm.example.cart
+package com.example.siriusxm.cart
 
 import cats.data.EitherT
 import cats.effect.IO
