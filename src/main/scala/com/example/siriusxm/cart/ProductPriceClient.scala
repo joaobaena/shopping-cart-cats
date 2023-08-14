@@ -19,7 +19,7 @@ object ProductPriceClient {
       product match {
         case ShoppingProduct.Cheerios =>
           EitherT.leftT[IO, ShoppingProductPriceResponse](CartError.UnableToFindPrice(product))
-        case p: ShoppingProduct =>
+        case p: ShoppingProduct       =>
           val price = BigDecimal(Random.between(0.01, 10.00)).setScale(2, BigDecimal.RoundingMode.HALF_UP)
           EitherT.rightT[IO, CartError](ShoppingProductPriceResponse(p.toString, price))
       }
@@ -30,10 +30,11 @@ object ProductPriceClient {
 
     def getPriceForProduct(product: ShoppingProduct): EitherT[IO, CartError, ShoppingProductPriceResponse] = {
       val productName = product.toString.toLowerCase
-      val request = basicRequest
+      val request     = basicRequest
         .get(uri"""https://raw.githubusercontent.com/mattjanks16/shopping-cart-test-data/main/${productName}.json""")
         .response(asJson[ShoppingProductPriceResponse])
-      val result = backend.send(request)
+      val result      = backend
+        .send(request)
         .map(_.body.leftMap(_ => CartError.UnableToFindPrice(product)).leftWiden[CartError])
       EitherT(result)
     }

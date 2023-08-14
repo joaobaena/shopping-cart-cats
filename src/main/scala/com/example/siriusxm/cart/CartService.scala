@@ -24,23 +24,23 @@ object CartService {
 
     def addToCart(cartId: UUID, cartItemsToAdd: NonEmptyList[CartItem]): EitherT[IO, CartError, Unit] =
       for {
-        cartOpt <- EitherT.liftF(carts.get.map(_.get(cartId)))
-        currentCartItems = cartOpt.map(_.items.map(_.asCartItem)).toList
-        allItems = mergeItems(currentCartItems.flatten, cartItemsToAdd)
+        cartOpt                <- EitherT.liftF(carts.get.map(_.get(cartId)))
+        currentCartItems        = cartOpt.map(_.items.map(_.asCartItem)).toList
+        allItems                = mergeItems(currentCartItems.flatten, cartItemsToAdd)
         updatedPricedCartItems <- allItems.traverse { item =>
-          productPriceClient.getPriceForProduct(item.shoppingProduct)
-            .map(res => PricedCartItem(item.shoppingProduct, res.price, item.amount))
-        }
-        _ <- EitherT.liftF(carts.updateAndGet(_.updated(cartId, CurrentCart(updatedPricedCartItems))))
+                                    productPriceClient
+                                      .getPriceForProduct(item.shoppingProduct)
+                                      .map(res => PricedCartItem(item.shoppingProduct, res.price, item.amount))
+                                  }
+        _                      <- EitherT.liftF(carts.updateAndGet(_.updated(cartId, CurrentCart(updatedPricedCartItems))))
       } yield ()
 
-    private def mergeItems(currentItems: List[CartItem], addItems: NonEmptyList[CartItem]): List[CartItem] = {
+    private def mergeItems(currentItems: List[CartItem], addItems: NonEmptyList[CartItem]): List[CartItem] =
       (addItems.toList ++ currentItems)
         .groupBy(c => c.shoppingProduct)
         .toList
         .map { case (product, cartItems) =>
           CartItem(product, cartItems.map(_.amount).sum)
         }
-    }
   }
 }
