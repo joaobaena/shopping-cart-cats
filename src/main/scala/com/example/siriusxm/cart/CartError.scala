@@ -2,7 +2,7 @@ package com.example.siriusxm.cart
 
 import java.util.UUID
 
-sealed trait CartError
+sealed trait CartError extends Throwable
 
 object CartError {
   final case class UnableToFindCart(cartId: UUID)                      extends CartError
