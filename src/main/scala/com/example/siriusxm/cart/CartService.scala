@@ -1,15 +1,15 @@
 package com.example.siriusxm.cart
 
-import cats.data.{EitherT, NonEmptyList}
-import cats.effect.{Async, IO, Ref}
+import cats.data.NonEmptyList
+import cats.effect.{Async, Ref}
 import cats.implicits._
 
 import java.util.UUID
 
 trait CartService[F[_]] {
-  def getCart(cartId: UUID): EitherT[F, CartError, CurrentCart]
+  def getCart(cartId: UUID): F[CurrentCart]
 
-  def addToCart(cartId: UUID, cartItemsToAdd: NonEmptyList[CartItem]): EitherT[F, CartError, Unit]
+  def addToCart(cartId: UUID, cartItemsToAdd: NonEmptyList[CartItem]): F[Unit]
 }
 
 object CartService {
@@ -17,15 +17,17 @@ object CartService {
 
   class LiveCartService[F[_]: Async](productPriceClient: ProductPriceClient[F], carts: Ref[F, Carts])
       extends CartService[F] {
-    def getCart(cartId: UUID): EitherT[F, CartError, CurrentCart] =
-      EitherT(
-        carts.get
-          .map(_.get(cartId).toRight(CartError.UnableToFindCart(cartId)))
-      )
+    def getCart(cartId: UUID): F[CurrentCart] =
+      carts.get
+        .map(c => c.get(cartId))
+        .flatMap {
+          case Some(currentCart) => Async[F].pure(currentCart)
+          case _                 => Async[F].raiseError(CartError.UnableToFindCart(cartId))
+        }
 
-    def addToCart(cartId: UUID, cartItemsToAdd: NonEmptyList[CartItem]): EitherT[F, CartError, Unit] =
+    def addToCart(cartId: UUID, cartItemsToAdd: NonEmptyList[CartItem]): F[Unit] =
       for {
-        cartOpt                <- EitherT.liftF(carts.get.map(_.get(cartId)))
+        cartOpt                <- carts.get.map(_.get(cartId))
         currentCartItems        = cartOpt.map(_.items.map(_.asCartItem)).toList
         allItems                = mergeItems(currentCartItems.flatten, cartItemsToAdd)
         updatedPricedCartItems <- allItems.traverse { item =>
@@ -33,7 +35,7 @@ object CartService {
                                       .getPriceForProduct(item.shoppingProduct)
                                       .map(res => PricedCartItem(item.shoppingProduct, res.price, item.amount))
                                   }
-        _                      <- EitherT.liftF(carts.updateAndGet(_.updated(cartId, CurrentCart(updatedPricedCartItems))))
+        _                      <- carts.updateAndGet(_.updated(cartId, CurrentCart(updatedPricedCartItems)))
       } yield ()
 
     private def mergeItems(currentItems: List[CartItem], addItems: NonEmptyList[CartItem]): List[CartItem] =
