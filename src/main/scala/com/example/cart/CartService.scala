@@ -1,4 +1,4 @@
-package com.example.siriusxm.cart
+package com.example.cart
 
 import cats.data.NonEmptyList
 import cats.effect.{Async, Ref}
