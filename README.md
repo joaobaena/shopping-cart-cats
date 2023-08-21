@@ -19,7 +19,7 @@ self-contained and not rely on external systems to be available to run.
 **An understanding of functional programming:** The solution should demonstrate the use of functional programming concepts, in particular, the use of immutable data structures, referential transparency, and the use of monads in dealing with effects.
 
 ## The Problem Statement
-Create a shopping cart package (e.g. `com.siriusxm.example.cart`) that facilitates 2 basic capabilities:
+Create a shopping cart package (e.g. `com.example.cart`) that facilitates 2 basic capabilities:
 
 1. Add multiple products to the cart. A product has a name and price. You should be able to specify how many of each product is being added to the cart and provide a means to observe the resulting state.
 1. Calculate the totals

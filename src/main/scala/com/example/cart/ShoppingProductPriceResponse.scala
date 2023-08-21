@@ -1,4 +1,4 @@
-package com.example.siriusxm.cart
+package com.example.cart
 
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder

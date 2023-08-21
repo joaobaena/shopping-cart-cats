@@ -2,9 +2,7 @@ package com.example
 
 import cats.data.NonEmptyList
 import cats.effect.{IO, IOApp, Ref}
-import com.example.siriusxm.cart.CartService.LiveCartService
-import com.example.siriusxm.cart.{CartError, CartItem, CartService, CurrentCart, ShoppingProduct}
-import com.example.siriusxm.cart.ProductPriceClient.{LiveProductPriceClient, TestToFailProductPriceClient}
+import com.example.cart.{CartError, CartItem, CartService, CurrentCart, ShoppingProduct}
 
 import java.util.UUID
 
